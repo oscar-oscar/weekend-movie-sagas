@@ -12,8 +12,10 @@ import { takeEvery, put } from 'redux-saga/effects';
 import axios from 'axios';
 
 // Create the rootSaga generator function
+//WATCHER
 function* rootSaga() {
     yield takeEvery('FETCH_MOVIES', fetchAllMovies);
+    yield takeEvery('FETCH_DETAILS', fetchDetails);
 }
 
 function* fetchAllMovies() {
@@ -26,16 +28,38 @@ function* fetchAllMovies() {
     } catch {
         console.log('get all error');
     }
-        
+
 }
+
+function* fetchDetails() {
+    try {
+        const details = yield axios.get(`/api/movie/${action.payload}`);
+        console.log('get details', movies.description);
+        yield put ({ type: 'SET_DETAILS', payload: details.data});
+    } catch{
+        console.log('error axios get details')
+        alert('something went wrong fetchDetails');
+    }
+}
+
 
 // Create sagaMiddleware
 const sagaMiddleware = createSagaMiddleware();
 
-// Used to store movies returned from the server
+// Used to store array of movies returned from the server
 const movies = (state = [], action) => {
     switch (action.type) {
         case 'SET_MOVIES':
+            return action.payload;
+        default:
+            return state;
+    }
+}
+
+// details of selected movie
+const details = (state = {}, action) => {
+    switch (action.type) {
+        case 'SET_DETAILS':
             return action.payload;
         default:
             return state;
@@ -57,6 +81,7 @@ const storeInstance = createStore(
     combineReducers({
         movies,
         genres,
+        details
     }),
     // Add sagaMiddleware to our store
     applyMiddleware(sagaMiddleware, logger),
@@ -68,7 +93,7 @@ sagaMiddleware.run(rootSaga);
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={storeInstance}>
-        <App />
+            <App />
         </Provider>
     </React.StrictMode>,
     document.getElementById('root')
